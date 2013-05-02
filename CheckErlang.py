@@ -25,11 +25,16 @@ class ErlangCheck(AbstractCheck.AbstractFilesCheck):
         beam = BeamFile(pkg.files()[filename].path)
         if not 'debug_info' in beam.compileinfo['options']:
             printWarning(pkg, "beam-compiled-without-debug_info", filename)
+        if 'time' in beam.compileinfo:
+            printWarning(pkg, "beam-consists-compile-time", filename)
 
 check=ErlangCheck()
 
 if Config.info:
     addDetails(
 'beam-compiled-without-debug_info',
-"Your beam file indicates that it doesn't contain debug_info. Please, make sure that you compile with +debug_info."
+"Your beam file indicates that it doesn't contain debug_info. Please, make sure that you compile with +debug_info.",
+'beam-consists-compile-time',
+"Your beam file consists compile time. Open Build Service may improperly consider it as changed."
 )
+
