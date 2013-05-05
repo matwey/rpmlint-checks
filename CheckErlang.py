@@ -20,6 +20,8 @@ from pybeam import BeamFile
 class ErlangCheck(AbstractCheck.AbstractFilesCheck):
     def __init__(self):
         AbstractCheck.AbstractFilesCheck.__init__(self, "CheckErlang", ".*?\.beam$")
+        build_dir = Config.getOption("Erlang.BuildDir", "^/home/abuild/.*")
+        self.source_re = re.compile(build_dir)
 
     def check_file(self, pkg, filename):
         beam = BeamFile(pkg.files()[filename].path)
@@ -27,6 +29,8 @@ class ErlangCheck(AbstractCheck.AbstractFilesCheck):
             printWarning(pkg, "beam-compiled-without-debug_info", filename)
         if 'time' in beam.compileinfo:
             printWarning(pkg, "beam-consists-compile-time", filename)
+        if not self.source_re.match(beam.compileinfo['source'].value):
+            printWarning(pkg, "beam-was-not-recompiled", filename)
 
 check=ErlangCheck()
 
@@ -36,5 +40,7 @@ if Config.info:
 "Your beam file indicates that it doesn't contain debug_info. Please, make sure that you compile with +debug_info.",
 'beam-consists-compile-time',
 "Your beam file consists compile time. Open Build Service may improperly consider it as changed."
+'beam-was-not-recompiled',
+"It seems that your beam file was not compiled by you, but was just copied in binary form to destination. Please, make sure that you really compile it from the sources."
 )
 
