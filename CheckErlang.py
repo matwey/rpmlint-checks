@@ -39,7 +39,7 @@ if Config.info:
 'beam-compiled-without-debug_info',
 "Your beam file indicates that it doesn't contain debug_info. Please, make sure that you compile with +debug_info.",
 'beam-consists-compile-time',
-"Your beam file consists compile time. Open Build Service may improperly consider it as changed."
+"Your beam file consists compile time. Open Build Service may improperly consider it as changed.",
 'beam-was-not-recompiled',
 "It seems that your beam file was not compiled by you, but was just copied in binary form to destination. Please, make sure that you really compile it from the sources."
 )
