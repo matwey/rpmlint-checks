@@ -28,9 +28,9 @@ class ErlangCheck(AbstractCheck.AbstractFilesCheck):
         if not 'debug_info' in beam.compileinfo['options']:
             printWarning(pkg, "beam-compiled-without-debug_info", filename)
         if 'time' in beam.compileinfo:
-            printWarning(pkg, "beam-consists-compile-time", filename)
+            printWarning(pkg, "beam-consists-compile-time", filename, str(beam.compileinfo['time']))
         if not self.source_re.match(beam.compileinfo['source'].value):
-            printWarning(pkg, "beam-was-not-recompiled", filename)
+            printWarning(pkg, "beam-was-not-recompiled", filename, beam.compileinfo['source'].value)
 
 check=ErlangCheck()
 
