@@ -47,8 +47,7 @@ class MFAdeps(object):
                 self.process_exports(beam)
 
     def process_exports(self, beam):
-        # first atom in table must be module name
-        thismodule = beam.atoms[0]
+        thismodule = beam.modulename
         self.__exports.update(Set(["%s:%s\%d" % (thismodule, function, arity) for (function, arity, label) in beam.exports]))
 
     def process_imports(self, beam, pkg, filename):
