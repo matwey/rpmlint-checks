@@ -43,7 +43,7 @@ class MFAdeps(object):
 
     def process_syspath(self, syspath):
         for root, dirs, files in os.walk(syspath, followlinks=True):
-            for (beam, name) in [(BeamFile(x),x) for x in [os.path.join(root, filename) for filename in files] if self.__file_re.match(x)]:
+            for beam in [BeamFile(x) for x in [os.path.join(root, filename) for filename in files] if self.__file_re.match(x)]:
                 self.process_exports(beam)
 
     def process_exports(self, beam):
