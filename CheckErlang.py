@@ -45,10 +45,10 @@ class CheckErlangImports(AbstractCheck.AbstractFilesCheck):
 
     def process_exports(self, beam):
         thismodule = beam.modulename
-        self._exports.update(Set(["%s:%s\%d" % (thismodule, function, arity) for (function, arity, label) in beam.exports]))
+        self._exports.update(Set(["%s:%s/%d" % (thismodule, function, arity) for (function, arity, label) in beam.exports]))
 
     def process_imports(self, beam, pkg, filename):
-        self._imports[(pkg,filename)] = Set(["%s:%s\%d" % (module, function, arity) for (module, function, arity) in beam.imports])
+        self._imports[(pkg,filename)] = Set(["%s:%s/%d" % (module, function, arity) for (module, function, arity) in beam.imports])
 
     def check_file(self, pkg, filename):
         if not (pkg,filename) in self._imports:
