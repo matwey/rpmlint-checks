@@ -29,17 +29,14 @@ class lazy(object):
         setattr(instance, self._function.func_name, val)
         return val
 
-class MFAdeps(object):
+class CheckErlangImports(AbstractCheck.AbstractFilesCheck):
     def __init__(self, syspaths):
-        self.__imports = dict()
-        self.__exports = Set()
+        AbstractCheck.AbstractFilesCheck.__init__(self, "CheckErlangImports", ".*?\.beam$")
+        self._imports = dict()
+        self._exports = Set()
         self.__file_re = re.compile(r'.*?\.beam')
         for syspath in syspaths:
             self.process_syspath(syspath)
-
-    def __del__(self):
-        # before I die, check consistency
-        self.check()
 
     def process_syspath(self, syspath):
         for root, dirs, files in os.walk(syspath, followlinks=True):
@@ -48,20 +45,23 @@ class MFAdeps(object):
 
     def process_exports(self, beam):
         thismodule = beam.modulename
-        self.__exports.update(Set(["%s:%s\%d" % (thismodule, function, arity) for (function, arity, label) in beam.exports]))
+        self._exports.update(Set(["%s:%s\%d" % (thismodule, function, arity) for (function, arity, label) in beam.exports]))
 
     def process_imports(self, beam, pkg, filename):
-        self.__imports[(pkg,filename)] = Set(["%s:%s\%d" % (module, function, arity) for (module, function, arity) in beam.imports])
+        self._imports[(pkg,filename)] = Set(["%s:%s\%d" % (module, function, arity) for (module, function, arity) in beam.imports])
 
-    def check(self):
-        all_imports = reduce(lambda init,cur: init.update(cur), self.__imports.values(), Set([]))
-        all_unresolved = all_imports.difference(self.__exports)
-        if not all_unresolved:
+    def check_file(self, pkg, filename):
+        if not (pkg,filename) in self._imports:
             return
-        for ((pkg,filename), s) in self.__imports.items():
-            unresolved = s.union(all_unresolved)
-            for mfa in unresolved:
-                 printWarning(pkg, "beam-import-not-found", filename, mfa)
+
+        imports = self._imports[(pkg,filename)]
+        unresolved = imports.difference(self._exports)
+
+        if not unresolved:
+            return
+
+        for mfa in unresolved:
+            printWarning(pkg, "beam-import-not-found", filename, mfa)
 
 class ErlangCheck(AbstractCheck.AbstractFilesCheck):
     def __init__(self):
@@ -70,8 +70,10 @@ class ErlangCheck(AbstractCheck.AbstractFilesCheck):
         self.source_re = re.compile(build_dir)
 
     @lazy 
-    def mfa_deps(self):
-        return MFAdeps(Config.getOption("Erlang.ErlangPaths", ["/usr/lib/erlang", "/usr/lib64/erlang"]))
+    def resolver(self):
+        check_imports = CheckErlangImports(Config.getOption("Erlang.ErlangPaths", ["/usr/lib/erlang", "/usr/lib64/erlang"]))
+        Config.addCheck("CheckErlangImports")
+        return check_imports
 
     def check_file(self, pkg, filename):
         beam = BeamFile(pkg.files()[filename].path)
@@ -81,8 +83,8 @@ class ErlangCheck(AbstractCheck.AbstractFilesCheck):
             printWarning(pkg, "beam-consists-compile-time", filename, str(beam.compileinfo['time']))
         if not self.source_re.match(beam.compileinfo['source'].value):
             printWarning(pkg, "beam-was-not-recompiled", filename, beam.compileinfo['source'].value)
-        self.mfa_deps.process_exports(beam)
-        self.mfa_deps.process_imports(beam, pkg, filename)
+        self.resolver.process_exports(beam)
+        self.resolver.process_imports(beam, pkg, filename)
 
 check=ErlangCheck()
 
